@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecaster Weekly Schedule</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .page-headline {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .day-selector {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .day-selector button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #4CAF50;
+            background-color: white;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .day-selector button:hover {
+            background-color: #e8f5e9;
+        }
+        
+        .day-selector button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        a {
+            color: #1976D2;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dotted #666;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 100px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -50px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .task-column {
+            font-weight: bold;
+            width: 30%;
+        }
+        
+        .forecaster-column {
+            width: 35%;
+        }
+        
+        .empty-cell {
+            background-color: #f0f0f0;
+        }
+        
+        .section-header {
+            background-color: #e8f5e9 !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="page-headline">Your Weatherbriefing Tasks</h2>
+    <h1 id="pageTitle">MONDAY</h1>
+    
+    <div class="day-selector">
+        <button onclick="changeDay('SUNDAY')">Sunday</button>
+        <button onclick="changeDay('MONDAY')">Monday</button>
+        <button onclick="changeDay('TUESDAY')">Tuesday</button>
+        <button onclick="changeDay('WEDNESDAY')">Wednesday</button>
+        <button onclick="changeDay('THURSDAY')">Thursday</button>
+    </div>
+    
+    <table id="scheduleTable">
+        <thead>
+            <tr>
+                <th class="task-column">Task</th>
+                <th class="forecaster-column">Forecaster 1</th>
+                <th class="forecaster-column">Forecaster 2</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+
+    <script>
+        // Data structure for all working days
+        const scheduleData = {
+            SUNDAY: {
+                Location: { f1: "INNSBRUCK", f2: "2nd LOCATION" },
+                "Prepare 2nd Location overview": { f1: "", f2: "Topo, Climatology" },
+                "Recap": { f1: "Recap how we ended up here", f2: "Recap how 2nd location ended up here" },
+                "Analysis Large Scale": { f1: "Make you familiar with the current weather situation", f2: "Make you familiar with the current weather situation" },
+                "Frontal Analysis ": { f1: "Discover Fronts", f2: "Discover Fronts" },
+                "Prepare Outlook": { f1: "", f2: "3 to 5 days hemispheric to frontal scale ENS" },
+                "Check your tech": { f1: "computer, bookmarks, accounts", f2: "2nd location small scale models, foreign models & weather service websites" },
+                "Masters": { f1: "Check EFI, search for Extreme Weather", f2: "Compare long therm models" },
+            },
+            MONDAY: {
+                Location: { f1: "INNSBRUCK", f2: "2nd LOCATION" },
+                "Prepare 2nd Location overview": { f1: "", f2: "Topo, Climatology" },
+                "Verification / Recap": { f1: "Recap Sunday", f2: "Recap Sunday" },
+                "Analysis Large Scale": { f1: "Hemispheric to frontal scale", f2: "" },
+                "Surface Chart Analysis": { f1: "0 UTC", f2: "6 UTC" },
+                "Frontal Analysis 1": { f1: "Today 18 UTC", f2: "Tomorrow 0 UTC" },
+                "Frontal Analysis 2": { f1: "Tomorrow 12 UTC", f2: "Tomorrow 18 UTC" },
+                "Observation 1": { f1: "9 UTC", f2: "" },
+                "Observation 2": { f1: "12 UTC", f2: "" },
+                "Prepare Outlook": { f1: "", f2: "3 to 5 days hemispheric to frontal scale ENS" },
+                "Masters": { f1: "Extreme Weather", f2: "Forecast uncertainty discussion" },
+                "_section1": "Forecast Table",
+                "Temperature": { f1: "Tmax, Tmin", f2: "Tmax, Tmin" },
+                "Sunshine duration": { f1: "Sunshine duration", f2: "" },
+                "Clouds": { f1: "", f2: "Clouds day|6-18 UTC, Clouds night|18-6 UTC" },
+                "Precipitation amount": { f1: "Precipitation amount", f2: "Precipitation amount" },
+                "Precipitation probability": { f1: "Precipitation probability", f2: "Precipitation probability" },
+                "Snowline": { f1: "Snowline (if precip)", f2: "" },
+                "Wind": { f1: "", f2: "Wind day|6-18 UTC, Wind night|18-6 UTC" },
+                "Foehn Wipp-Valley probability": { f1: "Foehn Wipp-Valley probability", f2: "" },
+                "Foehn Inn-Valley probability": { f1: "Foehn Inn-Valley probability", f2: "" }
+            },
+            TUESDAY: {
+                Location: { f1: "INNSBRUCK", f2: "2nd LOCATION" },
+                "Prepare 2nd Location overview": { f1: "", f2: "YES" },
+                "Verification / Recap": { f1: "Verification Innsbruck", f2: "Verification 2nd Location" },
+                "Analysis Large Scale": { f1: "Hemispheric to frontal scale", f2: "" },
+                "Surface Chart Analysis": { f1: "0 UTC", f2: "6 UTC" },
+                "Frontal Analysis 1": { f1: "Today 18 UTC", f2: "Tomorrow 0 UTC" },
+                "Frontal Analysis 2": { f1: "Tomorrow 12 UTC", f2: "Tomorrow 18 UTC" },
+                "Observation 1": { f1: "9 UTC", f2: "" },
+                "Observation 2": { f1: "12 UTC", f2: "" },
+                "Prepare Outlook": { f1: "", f2: "3 to 5 days hemispheric to frontal scale ENS" },
+                "Masters": { f1: "Extreme Weather", f2: "Forecast uncertainty discussion" },
+                "_section1": "Forecast Table",
+                "Temperature": { f1: "Tmax, Tmin", f2: "Tmax, Tmin" },
+                "Sunshine duration": { f1: "Sunshine duration", f2: "" },
+                "Clouds": { f1: "", f2: "Clouds day|6-18 UTC, Clouds night|18-6 UTC" },
+                "Precipitation amount": { f1: "Precipitation amount", f2: "Precipitation amount" },
+                "Precipitation probability": { f1: "Precipitation probability", f2: "Precipitation probability" },
+                "Snowline": { f1: "Snowline (if precip)", f2: "" },
+                "Wind": { f1: "", f2: "Wind day|6-18 UTC, Wind night|18-6 UTC" },
+                "Foehn Wipp-Valley probability": { f1: "Foehn Wipp-Valley probability", f2: "" },
+                "Foehn Inn-Valley probability": { f1: "Foehn Inn-Valley probability", f2: "" }
+            },
+            WEDNESDAY: {
+                Location: { f1: "2nd LOCATION", f2: "INNSBRUCK" },
+                "Prepare 2nd Location overview": { f1: "YES", f2: "" },
+                "Verification / Recap": { f1: "Verification 2nd Location", f2: "Verification Innsbruck" },
+                "Analysis Large Scale": { f1: "", f2: "Hemispheric to frontal scale" },
+                "Surface Chart Analysis": { f1: "6 UTC", f2: "0 UTC" },
+                "Frontal Analysis 1": { f1: "Tomorrow 0 UTC", f2: "Today 18 UTC" },
+                "Frontal Analysis 2": { f1: "Tomorrow 18 UTC", f2: "Tomorrow 12 UTC" },
+                "Observation 1": { f1: "", f2: "9 UTC" },
+                "Observation 2": { f1: "", f2: "12 UTC" },
+                "Prepare Outlook": { f1: "3 to 5 days hemispheric to frontal scale ENS", f2: "" },
+                "Masters": { f1: "Forecast uncertainty discussion", f2: "Extreme Weather" },
+                "_section1": "Forecast Table",
+                "Temperature": { f1: "Tmax, Tmin", f2: "Tmax, Tmin" },
+                "Sunshine duration": { f1: "", f2: "Sunshine duration" },
+                "Clouds": { f1: "Clouds day|6-18 UTC, Clouds night|18-6 UTC", f2: "" },
+                "Precipitation amount": { f1: "Precipitation amount", f2: "Precipitation amount" },
+                "Precipitation probability": { f1: "Precipitation probability", f2: "Precipitation probability" },
+                "Snowline": { f1: "", f2: "Snowline (if precip)" },
+                "Wind": { f1: "Wind day|6-18 UTC, Wind night|18-6 UTC", f2: "" },
+                "Foehn Wipp-Valley probability": { f1: "", f2: "Foehn Wipp-Valley probability" },
+                "Foehn Inn-Valley probability": { f1: "", f2: "Foehn Inn-Valley probability" }
+            },
+            THURSDAY: {
+                Location: { f1: "2nd LOCATION", f2: "INNSBRUCK" },
+                "Prepare 2nd Location overview": { f1: "YES", f2: "" },
+                "Verification / Recap": { f1: "Verification 2nd Location", f2: "Verification Innsbruck" },
+                "Analysis Large Scale": { f1: "", f2: "Hemispheric to frontal scale" },
+                "Surface Chart Analysis": { f1: "6 UTC", f2: "0 UTC" },
+                "Frontal Analysis 1": { f1: "Tomorrow 0 UTC", f2: "Today 18 UTC" },
+                "Frontal Analysis 2": { f1: "Tomorrow 18 UTC", f2: "Tomorrow 12 UTC" },
+                "Observation 1": { f1: "", f2: "9 UTC" },
+                "Observation 2": { f1: "", f2: "12 UTC" },
+                "Prepare Outlook": { f1: "3 to 5 days hemispheric to frontal scale ENS", f2: "" },
+                "Masters": { f1: "Forecast uncertainty discussion", f2: "Extreme Weather" },
+                "_section1": "Forecast Table",
+                "Temperature": { f1: "Tmax, Tmin", f2: "Tmax, Tmin" },
+                "Sunshine duration": { f1: "", f2: "Sunshine duration" },
+                "Clouds": { f1: "Clouds day|6-18 UTC, Clouds night|18-6 UTC", f2: "" },
+                "Precipitation amount": { f1: "Precipitation amount", f2: "Precipitation amount" },
+                "Precipitation probability": { f1: "Precipitation probability", f2: "Precipitation probability" },
+                "Snowline": { f1: "", f2: "Snowline (if precip)" },
+                "Wind": { f1: "Wind day|6-18 UTC, Wind night|18-6 UTC", f2: "" },
+                "Foehn Wipp-Valley probability": { f1: "", f2: "Foehn Wipp-Valley probability" },
+                "Foehn Inn-Valley probability": { f1: "", f2: "Foehn Inn-Valley probability" }
+            }
+        };
+
+        let currentDay = 'MONDAY';
+
+        // Render the table with data for the selected day
+        function renderTable(day) {
+            const data = scheduleData[day];
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            // Get current day name to check if we should add links
+            const currentDayName = getCurrentDayName();
+            
+            for (const [task, values] of Object.entries(data)) {
+                const row = document.createElement('tr');
+                
+                // Section header
+                if (task.startsWith('_section')) {
+                    row.innerHTML = `
+                        <td colspan="3" class="section-header">${values}</td>
+                    `;
+                } else {
+                    let f1Cell = values.f1 ? values.f1 : '';
+                    let f2Cell = values.f2 ? values.f2 : '';
+                    
+                    // Add links for Surface Chart Analysis only if it's the current day
+                    if (task === 'Surface Chart Analysis' && day === currentDayName) {
+                        if (values.f1) {
+                            const utc = values.f1.replace(' UTC', '');
+                            f1Cell = `<a href="${getSurfaceChartUrl(utc)}" target="_blank">${values.f1}</a>`;
+                        }
+                        if (values.f2) {
+                            const utc = values.f2.replace(' UTC', '');
+                            f2Cell = `<a href="${getSurfaceChartUrl(utc)}" target="_blank">${values.f2}</a>`;
+                        }
+                    }
+                    
+                    // Add tooltips for Wind and Clouds entries
+                    f1Cell = addTooltips(f1Cell);
+                    f2Cell = addTooltips(f2Cell);
+                    
+                    const f1Class = values.f1 ? '' : 'empty-cell';
+                    const f2Class = values.f2 ? '' : 'empty-cell';
+                    
+                    row.innerHTML = `
+                        <td class="task-column">${task}</td>
+                        <td class="forecaster-column ${f1Class}">${f1Cell}</td>
+                        <td class="forecaster-column ${f2Class}">${f2Cell}</td>
+                    `;
+                }
+                
+                tbody.appendChild(row);
+            }
+        }
+
+        // Add tooltips to text with format "text|tooltip"
+        function addTooltips(text) {
+            if (!text) return text;
+            
+            // Split by comma to handle multiple entries
+            const parts = text.split(', ');
+            const processedParts = parts.map(part => {
+                if (part.includes('|')) {
+                    const [label, tooltip] = part.split('|');
+                    return `<span class="tooltip">${label}<span class="tooltiptext">${tooltip}</span></span>`;
+                }
+                return part;
+            });
+            
+            return processedParts.join(', ');
+        }
+
+        // Generate URL for surface chart based on UTC time
+        function getSurfaceChartUrl(utc) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+            const utcStr = String(utc).padStart(2, '0');
+            return `https://acinn-ertel.uibk.ac.at/ertel/data/surface_maps/surface_${dateStr}_${utcStr}.pdf`;
+        }
+
+        // Get current day name
+        function getCurrentDayName() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            
+            if (dayOfWeek >= 1 && dayOfWeek <= 4) {
+                const workingDays = ['SUNDAY','MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY'];
+                return workingDays[dayOfWeek - 1];
+            } else {
+                return 'SUNDAY';
+            }
+        }
+
+        // Change the displayed day
+        function changeDay(day) {
+            currentDay = day;
+            document.getElementById('pageTitle').textContent = day;
+            renderTable(day);
+            
+            // Update active button
+            const buttons = document.querySelectorAll('.day-selector button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Get the next available working day based on current date
+        function getNextAvailableDay() {
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            
+            // Map day of week to next available working day
+            // Working days: Monday (1), Tuesday (2), Wednesday (3), Thursday (4)
+            if (dayOfWeek >= 1 && dayOfWeek <= 4) {
+                // Monday to Thursday: use current day
+                const workingDays = ['SUNDAY','MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY'];
+                return workingDays[dayOfWeek - 1];
+            } else {
+
+                // Friday (5), Saturday (6), Sunday (0): default to Monday
+                return 'SUNDAY';
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            // Get next available working day
+            currentDay = getNextAvailableDay();
+            
+            document.getElementById('pageTitle').textContent = currentDay;
+            renderTable(currentDay);
+            
+            // Mark active button
+            const buttons = document.querySelectorAll('.day-selector button');
+            const dayIndex = ['SUNDAY','MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY'].indexOf(currentDay);
+            if (dayIndex !== -1) {
+                buttons[dayIndex].classList.add('active');
+            }
+        };
+    </script>
+</body>
+</html>
