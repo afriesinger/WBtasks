@@ -391,7 +391,8 @@
 
         // Get the next available working day based on current date
         function getNextAvailableDay() {
-            const today = new Date();
+            // Create date object in Central European Time (CET/CEST)
+            const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
             const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
             
             // Map day of week to next available working day
