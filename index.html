@@ -396,13 +396,16 @@
             
             // Map day of week to next available working day
             // Working days: Monday (1), Tuesday (2), Wednesday (3), Thursday (4)
+            const workingDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'SUNDAY'];
+            
             if (dayOfWeek >= 1 && dayOfWeek <= 4) {
                 // Monday to Thursday: use current day
-                const workingDays = ['SUNDAY','MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY'];
                 return workingDays[dayOfWeek - 1];
+            } else if (dayOfWeek === 5 || dayOfWeek === 6) {
+                // Friday and Saturday: show Sunday
+                return 'SUNDAY';
             } else {
-
-                // Friday (5), Saturday (6), Sunday (0): default to Monday
+                // Sunday: show Sunday
                 return 'SUNDAY';
             }
         }
